@@ -56,16 +56,24 @@ rules.
 
 - PHP **8.1+** with `pdo_sqlite`, `zip` and (for Claude generation) `curl` + `openssl`
 - A writable `storage/` directory
+- [Composer](https://getcomposer.org) — only needed for Claude generation
 - Optional: an Anthropic API key
 
 ## Running it
 
 ```bash
-cd SiteForge
+git clone https://github.com/aszneema/siteforge.git
+cd siteforge
+composer install
 php -S localhost:8000
 ```
 
 Then open <http://localhost:8000>.
+
+`vendor/` is not committed, so a fresh clone has no Anthropic SDK until you run
+`composer install`. The app still runs fine without it — it falls back to the
+offline builder and says so on the Settings page — but the Claude option stays
+unavailable until the SDK is present *and* a key is set.
 
 > **Note on `php -S`:** the built-in server handles one request at a time, so
 > the live progress bar can stall while a build is running. Start it with
