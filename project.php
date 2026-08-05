@@ -56,7 +56,7 @@ layout_header(['title' => (string) $project['name'], 'active' => 'library']);
                 <div class="badges">
                     <span class="badge"><?= e(site_type_label((string) $project['site_type'])) ?></span>
                     <?php if ($project['engine'] !== ''): ?>
-                        <span class="badge"><?= $project['engine'] === 'claude' ? 'Claude' : 'Offline builder' ?></span>
+                        <span class="badge"><?= engine_label((string) $project['engine']) ?></span>
                     <?php endif; ?>
                     <span class="badge badge-soft"><?= count($versions) ?> version<?= count($versions) === 1 ? '' : 's' ?></span>
                     <span class="status status-<?= $isBuilding ? 'building' : e((string) $project['status']) ?>" id="projectStatus">
@@ -219,7 +219,7 @@ layout_header(['title' => (string) $project['name'], 'active' => 'library']);
                                         </div>
                                         <p><?= e((string) $version['summary']) ?></p>
                                         <p class="muted small"><?= (int) $version['file_count'] ?> files
-                                           &middot; <?= $version['engine'] === 'claude' ? 'Claude' : 'Offline builder' ?></p>
+                                           &middot; <?= engine_label((string) $version['engine']) ?></p>
                                         <div class="timeline-actions">
                                             <a class="btn btn-ghost btn-sm" href="project.php?id=<?= $projectId ?>&v=<?= $no ?>">View</a>
                                             <a class="btn btn-ghost btn-sm" href="download.php?p=<?= $projectId ?>&v=<?= $no ?>">ZIP</a>
