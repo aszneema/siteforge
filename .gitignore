@@ -1,0 +1,11 @@
+# Generated sites, uploads and the SQLite database
+/storage/*
+!/storage/.gitkeep
+
+# Composer dependencies
+/vendor/
+
+# Local overrides — config.php may hold an API key
+/config.local.php
+
+.DS_Store

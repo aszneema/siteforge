@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" role="img" aria-label="SiteForge — Build. Design. Create.">
+  <title>SiteForge — Build. Design. Create.</title>
+
+  <g transform="translate(200 8) scale(0.92)">
+    <!-- Scaffolding -->
+    <path d="M28 53 L28 88" stroke="#17A2B8" stroke-width="3" stroke-linecap="round"/>
+    <path d="M92 53 L92 88" stroke="#17A2B8" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- W: left half teal, right half navy -->
+    <path d="M12 72 L38 124 L60 80" fill="none" stroke="#17A2B8" stroke-width="18" stroke-linejoin="miter"/>
+    <path d="M60 80 L82 124 L108 72" fill="none" stroke="#1A2B4C" stroke-width="18" stroke-linejoin="miter"/>
+
+    <!-- Connector nodes -->
+    <path d="M33 45 L45 38" stroke="#1A2B4C" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M87 45 L75 38" stroke="#1A2B4C" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="28" cy="48" r="5.5" fill="#1A2B4C"/>
+    <circle cx="92" cy="48" r="5.5" fill="#1A2B4C"/>
+
+    <!-- Crystal tower -->
+    <path d="M60 6 L44 22 L44 62 L60 76 Z" fill="#17A2B8"/>
+    <path d="M60 6 L76 22 L76 62 L60 76 Z" fill="#1A2B4C"/>
+
+    <!-- Cursor -->
+    <path d="M52 26 L52 49.8 L57.9 44.2 L61.8 52.6 L66 50.8 L62.1 42.5 L68.8 42.1 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="260" y="230" text-anchor="middle"
+        font-family="Montserrat, 'Arial Black', Helvetica, sans-serif"
+        font-size="64" font-weight="800" letter-spacing="-1">
+    <tspan fill="#1A2B4C">SITE</tspan><tspan fill="#17A2B8">FORGE</tspan>
+  </text>
+
+  <text x="260" y="270" text-anchor="middle"
+        font-family="Inter, Helvetica, Arial, sans-serif"
+        font-size="22" font-weight="500" letter-spacing="3.5" fill="#64748B">
+    BUILD. DESIGN. CREATE.
+  </text>
+</svg>
