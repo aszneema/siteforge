@@ -10,7 +10,8 @@ $user = require_login();
 $mode = (string) config('generator', 'auto');
 $key = (string) config('anthropic_api_key', '');
 $engine = SiteForge\GeneratorFactory::describe($mode, $key);
-$hasSdk = class_exists(Anthropic\Client::class);
+$status = SiteForge\GeneratorFactory::status($key);
+$hasSdk = $status['sdk'];
 
 $projects = project_list((int) $user['id']);
 $versionCount = (int) db()->query(
@@ -56,24 +57,39 @@ layout_header(['title' => 'Settings', 'active' => 'settings']);
 
             <dl class="kv">
                 <div><dt>Mode</dt><dd><code><?= e($mode) ?></code> <span class="muted small">(config.php &rarr; <code>generator</code>)</span></dd></div>
-                <div><dt>Model</dt><dd><code><?= e((string) config('model')) ?></code></dd></div>
-                <div><dt>API key</dt><dd><?= $key !== ''
-                    ? '<span class="ok">detected</span> <span class="muted small">(' . e(substr($key, 0, 7)) . '&hellip;' . e(substr($key, -4)) . ')</span>'
-                    : '<span class="warn">not set</span>' ?></dd></div>
-                <div><dt>Anthropic SDK</dt><dd><?= $hasSdk
-                    ? '<span class="ok">installed</span>'
-                    : '<span class="warn">missing</span> <span class="muted small">— run <code>composer install</code></span>' ?></dd></div>
+                <div><dt>Claude</dt><dd><?= $status['key'] && $status['sdk']
+                    ? '<span class="ok">ready</span> <span class="muted small">(' . e((string) config('model')) . ')</span>'
+                    : '<span class="warn">' . ($status['key'] ? 'SDK missing' : 'no API key') . '</span>' ?></dd></div>
+                <div><dt>Local AI</dt><dd><?= $status['ollama_up']
+                    ? '<span class="ok">ready</span> <span class="muted small">(' . e($status['ollama_model'])
+                      . ' &middot; ' . count($status['ollama_models']) . ' model'
+                      . (count($status['ollama_models']) === 1 ? '' : 's') . ' installed)</span>'
+                    : '<span class="warn">not running</span> <span class="muted small">at <code>'
+                      . e($status['ollama_url']) . '</code></span>' ?></dd></div>
+                <div><dt>Template builder</dt><dd><span class="ok">always available</span></dd></div>
             </dl>
 
-            <?php if ($key === ''): ?>
+            <?php if (!$status['ollama_up']): ?>
                 <div class="callout">
-                    <h3>Turn on Claude generation</h3>
+                    <h3>Turn on free AI generation — no API key</h3>
+                    <p>Run a language model on this machine. It writes copy from your actual brief
+                       (your history, your products, your prices) instead of using pre-written template text.
+                       Free, offline, and nothing leaves your computer.</p>
+                    <pre><code># 1. install from https://ollama.com/download, then:
+ollama pull llama3.1</code></pre>
+                    <p class="muted small mb-0">SiteForge picks it up automatically — no restart needed.
+                       Around 5&nbsp;GB to download once; generation then takes roughly 30–90 seconds per site.</p>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!$status['key']): ?>
+                <div class="callout">
+                    <h3>Or use Claude for the best quality</h3>
                     <p>The API key is read from the environment or <code>config.php</code> — deliberately not
                        from a form on this page, so it never gets stored in the database or posted through a browser.</p>
-                    <p class="mb-0">Set it before starting your server:</p>
                     <pre><code>export ANTHROPIC_API_KEY="sk-ant-…"</code></pre>
-                    <p class="muted small mb-0">Until then, SiteForge builds sites with its offline template engine —
-                       everything else in the app works exactly the same.</p>
+                    <p class="muted small mb-0">When a key is present Claude is used in preference to the local model.
+                       Costs a few cents per site.</p>
                 </div>
             <?php endif; ?>
         </div>

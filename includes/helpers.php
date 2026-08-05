@@ -131,6 +131,17 @@ function site_type_label(string $type): string
     return site_types()[$type]['label'] ?? ucfirst($type);
 }
 
+/** Human name for the engine recorded on a version. */
+function engine_label(string $engine): string
+{
+    return match ($engine) {
+        'claude' => 'Claude',
+        'ollama' => 'Local AI',
+        'local'  => 'Template builder',
+        default  => 'Unknown',
+    };
+}
+
 /** Guess a content type from a file path, for preview.php. */
 function mime_for(string $path): string
 {

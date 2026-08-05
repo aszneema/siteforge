@@ -86,6 +86,44 @@ unavailable until the SDK is present *and* a key is set.
 
 Register an account on first run — accounts are local to this install.
 
+## Three engines, picked automatically
+
+SiteForge always works. On `'generator' => 'auto'` (the default) it uses the
+best writer available:
+
+| | Writes your copy? | Cost | Needs |
+|---|---|---|---|
+| **Claude** | Yes — best quality | a few cents per site | `ANTHROPIC_API_KEY` |
+| **Local AI** | Yes — free and offline | none | [Ollama](https://ollama.com/download) + a model |
+| **Template builder** | No — pre-written copy | none | nothing, always available |
+
+The template builder reads your brief for *signals* — industry, colour, style,
+which sections and components — and assembles copy from a built-in bank. It's
+instant and needs nothing, but it will never mention your grandmother's
+sourdough starter, because it doesn't write: it selects.
+
+Both AI engines fix that. They read the brief properly and write copy about
+*your* business, then the same renderer builds the site, so every other feature
+(palettes, motion, components, all four formats, edits) works identically
+whichever engine is active.
+
+### Free AI with no API key
+
+```bash
+# install from https://ollama.com/download, then:
+ollama pull llama3.1
+```
+
+That's it — SiteForge detects it automatically, no restart needed. Around 5 GB
+once; generation then takes roughly 30–90 seconds per site depending on your
+machine.
+
+The local model isn't asked to write HTML. It writes your **content** as
+structured data, and the renderer builds the pages from it — which is far more
+reliable on a 7–8B model than asking for six consistent files, and produces
+better markup. Set `ollama_model` in `config.php` to pin a specific model, or
+leave it empty to auto-pick the best one installed.
+
 ## Turning on Claude generation
 
 Without an API key SiteForge uses its **offline builder**: it reads the brief,
