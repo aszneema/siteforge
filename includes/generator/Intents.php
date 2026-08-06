@@ -41,7 +41,8 @@ final class Intents
             'more life', 'liven', 'spice', 'jazz', 'transitions', 'effects', 'snappy',
             'micro interactions', 'microinteractions'],
         'motion.down' => ['static', 'still', 'calm down', 'calmer', 'no motion',
-            'motionless', 'plain', 'boring', 'settle down', 'tone it down', 'tone down'],
+            'motionless', 'plain', 'boring', 'settle down', 'tone it down', 'tone down',
+            'quiet', 'quieter', 'less busy', 'too busy', 'distracting'],
 
         // --- Components -----------------------------------------------------
         'comp.slider'     => ['slider', 'carousel', 'slideshow', 'slide show', 'rotator', 'swiper'],
@@ -88,6 +89,7 @@ final class Intents
 
         // --- Layout ---------------------------------------------------------
         'hero.centred' => ['centred hero', 'centered hero', 'center the hero', 'centre the hero',
+            'stack the hero', 'stacked hero', 'image below the text', 'image underneath',
             'hero in the middle', 'centred header', 'centered banner'],
         'hero.full'    => ['full screen hero', 'fullscreen hero', 'full width hero', 'big hero',
             'hero image background', 'full bleed hero', 'giant hero'],
@@ -104,6 +106,7 @@ final class Intents
             'more white space', 'more whitespace', 'spacious', 'spread out'],
 
         'radius.sharp'   => ['sharp corners', 'square corners', 'straight corners', 'no rounding',
+            'square buttons', 'squared buttons', 'square the buttons', 'squarer',
             'sharper', 'boxy', 'angular'],
         'radius.rounded' => ['rounded corners', 'rounder', 'softer corners', 'round the corners', 'soft corners'],
         'radius.pill'    => ['pill buttons', 'pill shaped', 'fully rounded', 'capsule buttons'],
@@ -112,8 +115,12 @@ final class Intents
         'type.serif'     => ['serif', 'serif font', 'times', 'georgia', 'classic font', 'editorial font'],
         'type.sans'      => ['sans serif', 'sans-serif', 'clean font', 'modern font', 'helvetica', 'arial'],
         'type.mono'      => ['monospace', 'mono font', 'code font', 'typewriter'],
-        'type.rounded'   => ['rounded font', 'friendly font', 'soft font'],
-        'type.condensed' => ['condensed font', 'narrow font', 'tall font', 'compressed type'],
+        // 'rounder font' has to be listed in full: bare 'rounder' belongs to
+        // radius.rounded, and the longer phrase is what outranks it.
+        'type.rounded'   => ['rounded font', 'friendly font', 'soft font',
+            'rounder font', 'rounder type', 'rounder typeface'],
+        'type.condensed' => ['condensed font', 'narrow font', 'tall font', 'compressed type',
+            'condensed type', 'condensed', 'narrow type'],
         'type.bigger'    => ['bigger text', 'larger text', 'bigger headings', 'larger headings',
             'bigger type', 'increase font', 'bigger font'],
         'type.smaller'   => ['smaller text', 'smaller headings', 'smaller type', 'reduce font', 'smaller font'],
@@ -123,12 +130,24 @@ final class Intents
         'btn.solid'   => ['solid buttons', 'filled buttons', 'block buttons'],
         'btn.gradient'=> ['gradient buttons', 'gradient', 'gradients', 'colourful buttons', 'colorful buttons'],
 
+        // --- Palette intensity ----------------------------------------------
+        // Named colours ("make it green") are handled as literals; these are
+        // the requests that say how strong the colour should be, not which.
+        'palette.vivid' => ['more colourful', 'more colorful', 'more color', 'more colour',
+            'brighter colours', 'brighter colors', 'more vibrant', 'vibrant', 'punchier colours',
+            'punchier colors', 'more saturated', 'less dull', 'not so dull', 'add some colour',
+            'add some color', 'needs colour', 'needs color'],
+        'palette.muted' => ['less colourful', 'less colorful', 'muted colours', 'muted colors',
+            'more muted', 'tone the colours down', 'tone the colors down', 'less saturated',
+            'softer colours', 'softer colors', 'too colourful', 'too colorful'],
+
         // --- Style ----------------------------------------------------------
         'style.minimal' => ['minimal', 'minimalist', 'clean', 'simple', 'understated', 'stripped back', 'plainer'],
         'style.elegant' => ['elegant', 'luxury', 'luxurious', 'classy', 'sophisticated', 'refined', 'upscale', 'premium', 'high end'],
         'style.bold'    => ['bold', 'striking', 'loud', 'strong', 'impactful', 'confident', 'heavy'],
         'style.playful' => ['playful', 'fun', 'friendly', 'quirky', 'cheerful', 'casual', 'informal'],
-        'style.modern'  => ['modern', 'sleek', 'contemporary', 'current', 'up to date', 'fresh'],
+        'style.modern'  => ['modern', 'sleek', 'contemporary', 'current', 'up to date', 'fresh',
+            'modernise', 'modernize', 'update the look', 'bring it up to date'],
 
         // --- Tone of the copy ------------------------------------------------
         'tone.friendly' => ['friendlier', 'warmer', 'friendly tone', 'warm tone', 'conversational',
@@ -141,7 +160,8 @@ final class Intents
         // --- Whole-site refresh ---------------------------------------------
         'general.better' => ['better', 'nicer', 'improve', 'improved', 'polish', 'nicer looking',
             'more professional', 'more attractive', 'prettier', 'smarter', 'upgrade the design',
-            'redesign', 'refresh', 'more appealing', 'good looking', 'more impressive'],
+            'redesign', 'refresh', 'more appealing', 'good looking', 'more impressive',
+            'pop', 'make it pop', 'stand out', 'more exciting', 'spice it up', 'jazz it up'],
         ];
     }
 
@@ -284,7 +304,9 @@ final class Intents
         // 'len' is the span the phrase actually occupies — it must not include
         // the surrounding spaces, or two adjacent phrases look like they
         // overlap and the second one gets thrown away.
-        foreach ([' ', 's ', 'es ', 'd ', 'ed ', 'ing '] as $suffix) {
+        // 'er'/'r' catch the comparatives people actually type — "bolder",
+        // "cleaner", "simpler" — without needing a row per adjective.
+        foreach ([' ', 's ', 'es ', 'd ', 'ed ', 'ing ', 'er ', 'r '] as $suffix) {
             $at = strpos($norm, ' ' . $trigger . $suffix);
             if ($at !== false) {
                 return [
@@ -516,6 +538,26 @@ final class Intents
                     'gradient' => 'gave the buttons a gradient',
                     default    => 'reset the button style',
                 };
+
+            case 'palette':
+                // There's no saturation dial in the renderer — intensity is
+                // expressed by which palette we land on, so move to one that
+                // reads the way they asked and isn't the one they already have.
+                $vivid = ['violet', 'crimson', 'ember', 'rose', 'teal'];
+                $muted = ['slate', 'sand', 'forest', 'ocean'];
+                if ($negated) {
+                    return null;
+                }
+                $wanted = $key === 'vivid' ? $vivid : $muted;
+                $current = (string) ($spec['palette'] ?? '');
+                if (in_array($current, $wanted, true)) {
+                    return null;   // already reads that way; don't churn it
+                }
+                $spec['palette'] = $wanted[0];
+                unset($spec['custom_primary']);   // a hand-picked colour would override the swap
+                return $key === 'vivid'
+                    ? 'brightened the palette to ' . $wanted[0]
+                    : 'toned the palette down to ' . $wanted[0];
 
             case 'style':
                 if ($negated || ($spec['style'] ?? '') === $key) {

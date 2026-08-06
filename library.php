@@ -75,8 +75,14 @@ layout_header(['title' => 'Library', 'active' => 'library']);
                     <article class="project" data-id="<?= $id ?>" data-bucket="<?= e($bucket) ?>"
                              data-name="<?= e(mb_strtolower((string) $project['name'])) ?>" data-reveal>
 
+                        <?php $isApp = ($project['kind'] ?? 'site') === 'app'; ?>
                         <div class="project-thumb">
-                            <?php if ($version > 0): ?>
+                            <?php if ($isApp): ?>
+                                <iframe src="live.php?p=<?= $id ?>"
+                                        title="Preview of <?= e($project['name']) ?>"
+                                        loading="lazy" scrolling="no" tabindex="-1"></iframe>
+                                <a class="project-thumb-link" href="build.php?id=<?= $id ?>"><span>Open</span></a>
+                            <?php elseif ($version > 0): ?>
                                 <iframe src="preview.php?p=<?= $id ?>&v=<?= $version ?>"
                                         title="Preview of <?= e($project['name']) ?>"
                                         loading="lazy" scrolling="no" tabindex="-1"></iframe>
@@ -93,13 +99,15 @@ layout_header(['title' => 'Library', 'active' => 'library']);
 
                         <div class="project-body">
                             <div class="project-top">
-                                <h2><a href="project.php?id=<?= $id ?>"><?= e($project['name']) ?></a></h2>
+                                <h2><a href="<?= ($project["kind"] ?? "site") === "app" ? "build.php?id=" . $id : "project.php?id=" . $id ?>"><?= e($project["name"]) ?></a></h2>
                                 <span class="status status-<?= e($bucket) ?>" data-status><?= e(ucfirst($status)) ?></span>
                             </div>
 
                             <p class="muted small">
-                                <?= e(site_type_label((string) $project['site_type'])) ?>
-                                &middot; <span data-version><?= $version > 0 ? 'v' . $version : 'not built' ?></span>
+                                <?= $isApp ? 'App with data' : e(site_type_label((string) $project['site_type'])) ?>
+                                <?php if (!$isApp): ?>
+                                    &middot; <span data-version><?= $version > 0 ? 'v' . $version : 'not built' ?></span>
+                                <?php endif; ?>
                                 &middot; <span data-updated><?= e(human_time((string) $project['updated_at'])) ?></span>
                             </p>
 
@@ -117,9 +125,14 @@ layout_header(['title' => 'Library', 'active' => 'library']);
                             <?php endif; ?>
 
                             <div class="project-actions">
+                                <?php if (($project['kind'] ?? 'site') === 'app'): ?>
+                                    <a class="btn btn-ghost btn-sm" href="build.php?id=<?= $id ?>">Open</a>
+                                    <a class="btn btn-ghost btn-sm" href="live.php?p=<?= $id ?>" target="_blank" rel="noopener">View live</a>
+                                <?php else: ?>
                                 <a class="btn btn-ghost btn-sm" href="project.php?id=<?= $id ?>">Open</a>
                                 <?php if ($version > 0): ?>
                                     <a class="btn btn-ghost btn-sm" href="download.php?p=<?= $id ?>&v=<?= $version ?>">Download</a>
+                                <?php endif; ?>
                                 <?php endif; ?>
                                 <button class="btn btn-ghost btn-sm js-rename" data-id="<?= $id ?>">Rename</button>
                                 <button class="btn btn-ghost btn-sm btn-danger js-delete" data-id="<?= $id ?>">Delete</button>

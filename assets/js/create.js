@@ -212,3 +212,39 @@
     errorBox.hidden = true;
   }
 })();
+
+/* "An app with data" — create it and go straight to the builder. */
+(function () {
+  'use strict';
+
+  var form = document.getElementById('appForm');
+  if (!form) return;
+
+  var input = document.getElementById('appName');
+  var error = document.getElementById('appError');
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    var name = input.value.trim();
+    if (name.length < 2) {
+      error.textContent = 'Give your app a name first.';
+      error.hidden = false;
+      return;
+    }
+    error.hidden = true;
+
+    var button = form.querySelector('button');
+    button.disabled = true;
+    button.textContent = 'Creating…';
+
+    window.sf.post('api/projects.php', { action: 'start_app', name: name })
+      .then(function (result) { window.location.href = result.url; })
+      .catch(function (err) {
+        error.textContent = err.message;
+        error.hidden = false;
+        button.disabled = false;
+        button.textContent = 'Create it';
+      });
+  });
+})();

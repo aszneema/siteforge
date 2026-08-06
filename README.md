@@ -2,9 +2,15 @@
 
 **Build. Design. Create.**
 
-Describe a website in plain English, watch it get built, then change it by
-describing the change. Every build and every edit is saved as a version you can
-preview, restore or download as a ZIP.
+Two ways to make a site, both without writing code:
+
+- **A website** — describe it in plain English, watch it get built, then change
+  it by describing the change. Every build and every edit is saved as a version
+  you can preview, restore or download as a ZIP.
+- **An app with data** — for anything you keep a *list* of: games you rate,
+  recipes, reviews, a collection. You say what one of them is (title, cover,
+  rating) and the add-form, the listing page and the database table are made for
+  you. Nothing to generate and nothing to download — it's live as you type.
 
 Written in plain PHP with SQLite. No framework, no build step, no npm.
 
@@ -174,6 +180,7 @@ changes: *"make it dark and add a slider"* does both.
 | **Sections** | add a pricing table · remove the testimonials · add an FAQ · no gallery |
 | **Order** | move testimonials above services · put the gallery first |
 | **Theme** | make it dark · go light · use a green palette · primary colour #0f766e |
+| **Colour strength** | more colourful · needs colour · more vibrant · less colourful · tone the colours down |
 | **Layout** | centre the hero · full screen hero · flip the hero · wider · narrower |
 | **Spacing** | too much space · tighter · more breathing room |
 | **Shape** | sharp corners · rounded corners · pill buttons · outlined buttons · gradient buttons |
@@ -189,6 +196,41 @@ suggests three things that would change *this* site — it never claims to have
 done something it didn't. With an API key set, Claude handles the edit instead
 and there's no vocabulary limit at all.
 
+## Apps with data
+
+Pick **An app with data** on the Create page instead of describing a site. You
+get a workspace with two things in it:
+
+- **Collections** — a kind of thing you want to list. "Games", "Recipes",
+  "Books". Each one gets its own database table behind the scenes.
+- **Pages** — ordinary pages with words on them, or a page that lists a
+  collection.
+
+Give a collection its **details** and everything else follows. The details are
+typed, and the type is what decides how it's entered and how it's shown:
+
+| Detail | Entered as | Shown as |
+|---|---|---|
+| Short text | one-line box | plain text |
+| Long text | text area | paragraph |
+| Rating | 1–5 star picker | ★★★★☆ |
+| Number | number box | plain number |
+| Image | file upload | picture on the card |
+| Date | date picker | `4 Aug 2026` |
+| Choice | dropdown of your options | plain text |
+| Link | url box | a link |
+| Yes/No | checkbox | Yes / No |
+
+Add "Games" with a Title, a Rating and a Platform, and you immediately have a
+form to add a game and a page that lists them. Sort the listing by any detail,
+ascending or descending — rate three games and the page orders itself by rating.
+
+Mark a detail **must be filled in** and the form refuses to save without it.
+Everything is stored in SQLite, so it's still there next time.
+
+The live site is served by `live.php` and is styled with the same CssKit the
+generated sites use, so it doesn't look like a database admin screen.
+
 ## Layout
 
 ```
@@ -200,11 +242,16 @@ preview.php      Serves a generated site (executes PHP projects)
 download.php     ZIP export
 settings.php     Engine status and account
 
+build.php        App workspace — collections, pages, site name
+collection.php   A collection's details and its saved entries
+live.php         Serves an app's live site from the database
+
 includes/
   bootstrap.php  Config, session, DB, autoloader
   db.php         Schema and migrations
   auth.php       Registration and login
   projects.php   Projects, versions, files, chat log
+  builder.php    Collections, fields, entries, pages
   pipeline.php   Runs one generation end to end
   generator/     Generator, ClaudeGenerator, LocalGenerator,
                  Blueprint (brief → spec), Content (copy bank),

@@ -18,6 +18,26 @@ $action = (string) ($body['action'] ?? '');
 
 switch ($action) {
 
+    // An app you build by clicking — pages and collections, stored in the
+    // database. Nothing to generate, so it's ready immediately.
+    case 'start_app':
+        require_once SF_ROOT . '/includes/builder.php';
+
+        $name = trim((string) ($body['name'] ?? ''));
+        if ($name === '') {
+            json_error('Give your app a name.');
+        }
+        if (mb_strlen($name) > 80) {
+            $name = mb_substr($name, 0, 80);
+        }
+
+        $id = project_create($userId, $name, (string) ($body['brief'] ?? ''), 'html');
+        db()->prepare("UPDATE projects SET kind = 'app', status = 'ready', progress = 100, stage = 'Ready' WHERE id = ?")
+            ->execute([$id]);
+        app_scaffold($id, $name);
+
+        json_out(['ok' => true, 'project_id' => $id, 'name' => $name, 'url' => 'build.php?id=' . $id]);
+
     // Create the project row up front so the browser has an id to poll while
     // the (much slower) generation request runs.
     case 'start':

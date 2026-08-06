@@ -798,3 +798,10 @@ pre code { background: none; border: 0; padding: 0; color: inherit; }
   .preview-stage { height: 62vh; }
   .brand-word { font-size: 1.08rem; }
 }
+
+/* --- Create page: choosing what to make -------------------------------- */
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.kind-picker { margin-bottom: .5rem; }
+.kind-picker .card { display: flex; flex-direction: column; }
+.kind-picker .card p { font-size: .93rem; }
+.kind-picker form { margin-top: auto; }

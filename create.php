@@ -34,6 +34,33 @@ layout_header(['title' => 'Create a website', 'active' => 'create']);
             <p class="muted"><?= e($engine['note']) ?></p>
         </header>
 
+        <!-- What are we making? ------------------------------------------>
+        <div class="grid grid-2 kind-picker" data-reveal>
+            <div class="card">
+                <span class="card-num">Pages</span>
+                <h3>A website</h3>
+                <p>Describe it and it gets written for you — home, about, services, contact.
+                   Good for a business, a portfolio, a cafe. The wording is fixed once it's made.</p>
+                <p class="muted small">You're on this one — describe it below.</p>
+            </div>
+
+            <div class="card">
+                <span class="card-num">Data</span>
+                <h3>An app with data</h3>
+                <p>For anything you add things to: <strong>games you rate</strong>, recipes, reviews, a
+                   collection. You say what a "game" is — title, cover, rating — and the add-form and
+                   listing page build themselves. Everything saves to the database.</p>
+                <form id="appForm" class="stack" style="margin-top:1rem">
+                    <label class="field">
+                        <span class="sr-only">App name</span>
+                        <input type="text" id="appName" placeholder="Game Ratings" maxlength="80" required>
+                    </label>
+                    <div class="composer-error" id="appError" role="alert" hidden></div>
+                    <button class="btn btn-primary" type="submit">Create it</button>
+                </form>
+            </div>
+        </div>
+
         <!-- Conversation ------------------------------------------------->
         <div class="chat" id="chat" aria-live="polite">
             <div class="msg msg-bot">
