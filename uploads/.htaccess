@@ -1,0 +1,4 @@
+# Only images live here; never run or serve anything else.
+<FilesMatch "\.(?!(jpe?g|png|gif|webp)$)[^.]+$">
+  Require all denied
+</FilesMatch>

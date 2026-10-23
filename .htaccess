@@ -1,0 +1,6 @@
+Options -Indexes
+# Keep the database, settings and libraries private.
+RedirectMatch 404 ^/(.*/)?(data|vendor)/
+<FilesMatch "^(config|lib)\.php$|\.(sqlite.*|md|json|lock)$">
+  Require all denied
+</FilesMatch>

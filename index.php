@@ -1,159 +1,81 @@
 <?php
-declare(strict_types=1);
-
-require_once __DIR__ . '/includes/bootstrap.php';
-require_once SF_ROOT . '/includes/layout.php';
-require_once SF_ROOT . '/includes/projects.php';
-
-$user = current_user();
-$engine = SiteForge\GeneratorFactory::describe(
-    (string) config('generator', 'auto'),
-    (string) config('anthropic_api_key', '')
-);
-
-$recent = $user ? array_slice(project_list((int) $user['id']), 0, 3) : [];
-
-layout_header(['title' => 'Build a website by describing it', 'active' => 'home']);
+require __DIR__ . '/lib.php';
+$u = user();
+$start = $u ? 'dashboard.php' : 'auth.php?mode=register';
+head('Build a website in minutes', 'page-home');
 ?>
-
-<section class="hero">
-    <div class="shell hero-inner">
-        <div class="hero-copy" data-reveal>
-            <span class="pill">
-                <span class="pill-dot"></span>
-                <?= e($engine['label']) ?> &middot; ready
-            </span>
-
-            <h1>Describe the website.<br><span class="grad">Watch it get built.</span></h1>
-
-            <p class="hero-sub">
-                Build. Design. Create. Type what you want in plain English, add your images,
-                pick HTML or PHP, and SITEFORGE writes the whole thing. Don't like something?
-                Say so, and it changes.
-            </p>
-
-            <div class="hero-actions">
-                <a class="btn btn-primary btn-lg" href="create.php">Start building</a>
-                <a class="btn btn-ghost btn-lg" href="library.php">Open the library</a>
-            </div>
-
-            <ul class="hero-facts">
-                <li><strong data-count="4">0</strong><span>output formats</span></li>
-                <li><strong data-count="16">0</strong><span>industry styles</span></li>
-                <li><strong>&infin;</strong><span>edits, versioned</span></li>
-            </ul>
+<main>
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div>
+        <span class="pill">✨ AI builder + visual editor</span>
+        <h1>Build the website you imagine, <span>exactly how you want it.</span></h1>
+        <p class="lead">Describe your site to the AI and watch it appear, or design it yourself with drag-and-drop sections and hundreds of style options. Switch between the two whenever you like.</p>
+        <div class="hero-cta">
+          <a class="btn btn-lg" href="<?= $start ?>">Start building, it’s free</a>
+          <a class="btn btn-ghost btn-lg" href="#how">See how it works</a>
         </div>
-
-        <div class="hero-demo" data-reveal>
-            <div class="demo-window">
-                <div class="demo-bar">
-                    <span></span><span></span><span></span>
-                    <em>create.php</em>
-                </div>
-                <div class="demo-body">
-                    <div class="demo-msg demo-user">
-                        A site for a bakery called Marlow &amp; Bean. Warm colours, show the menu,
-                        and a section for opening hours.
-                    </div>
-                    <div class="demo-msg demo-bot">
-                        <span class="demo-step is-done">Reading your brief</span>
-                        <span class="demo-step is-done">Choosing a palette</span>
-                        <span class="demo-step is-live">Writing pages<span class="dots"><i></i><i></i><i></i></span></span>
-                    </div>
-                    <div class="demo-progress"><span></span></div>
-                </div>
-            </div>
+        <p class="muted small">No code. No design skills. Publish with one click.</p>
+      </div>
+      <div class="mock" aria-hidden="true">
+        <div class="mock-bar"><i></i><i></i><i></i><span>siteforge · editor</span></div>
+        <div class="mock-body">
+          <div class="mock-chat">
+            <p class="me">A cosy site for my bakery with our menu and opening hours</p>
+            <p class="bot">Done! I built a warm homepage with your menu, hours and a photo gallery. Want online orders too?</p>
+            <p class="me">Yes, and make the buttons pink</p>
+          </div>
+          <div class="mock-site">
+            <div class="ms-nav"><b>Crumb &amp; Co.</b><span></span><span></span><span></span></div>
+            <div class="ms-hero"><h3>Fresh bread, baked at sunrise</h3><p></p><em>Order now</em></div>
+            <div class="ms-cards"><i></i><i></i><i></i></div>
+          </div>
         </div>
+      </div>
     </div>
-</section>
+  </section>
 
-<section class="section">
-    <div class="shell">
-        <header class="section-head" data-reveal>
-            <span class="eyebrow">How it works</span>
-            <h2>Three steps, no build tools</h2>
-        </header>
-
-        <div class="grid grid-3">
-            <article class="card" data-reveal>
-                <span class="card-num">01</span>
-                <h3>Describe it</h3>
-                <p>Say what the site is for, who it's for, and anything you care about — colours,
-                   sections, tone. Attach images if you have them.</p>
-            </article>
-            <article class="card" data-reveal>
-                <span class="card-num">02</span>
-                <h3>Watch it build</h3>
-                <p>Progress shows live on the Create page and in your Library, so you can see
-                   exactly where a build has got to.</p>
-            </article>
-            <article class="card" data-reveal>
-                <span class="card-num">03</span>
-                <h3>Edit in plain English</h3>
-                <p>"Make it dark." "Add a pricing section." "Rename it to Riverside Dental."
-                   Every change is saved as a new version you can roll back to.</p>
-            </article>
-        </div>
+  <section class="wrap two-ways" id="how">
+    <h2>Two ways to build. Use one, or both.</h2>
+    <div class="ways">
+      <article class="card way">
+        <span class="way-ic">✨</span>
+        <h3>Chat with the AI builder</h3>
+        <p>Tell it what you want in plain words, in any language. It builds full pages with real content, then keeps editing: “add a pricing section”, “make it darker”, “put my logo here”.</p>
+        <ul><li>Builds exactly what you describe</li><li>Understands your photos and screenshots</li><li>Every change can be undone</li></ul>
+      </article>
+      <article class="card way">
+        <span class="way-ic">🎨</span>
+        <h3>Design it yourself</h3>
+        <p>Start from a template, drag in ready-made sections and click anything to change it. Fonts, colours, spacing, borders, shadows, layout: it’s all there.</p>
+        <ul><li>25+ ready sections and elements</li><li>One-click styles and a theme editor</li><li>Desktop, tablet and phone views</li></ul>
+      </article>
     </div>
-</section>
+  </section>
 
-<section class="section section-alt">
-    <div class="shell">
-        <header class="section-head" data-reveal>
-            <span class="eyebrow">Output formats</span>
-            <h2>Pick what you'll actually deploy</h2>
-        </header>
-
-        <div class="grid grid-4">
-            <?php foreach (site_types() as $key => $type): ?>
-                <article class="type-card" data-reveal>
-                    <span class="type-icon"><?= $type['icon'] ?></span>
-                    <h3><?= e($type['label']) ?></h3>
-                    <p><?= e($type['hint']) ?></p>
-                </article>
-            <?php endforeach; ?>
-        </div>
+  <section class="band">
+    <div class="wrap steps">
+      <div><b>1</b><h3>Describe or pick</h3><p>Tell the AI your idea, or choose a template and style.</p></div>
+      <div><b>2</b><h3>Make it yours</h3><p>Edit by hand, ask the AI for changes, or both.</p></div>
+      <div><b>3</b><h3>Publish</h3><p>Go live with one click, or download the files.</p></div>
     </div>
-</section>
+  </section>
 
-<?php if ($recent): ?>
-<section class="section">
-    <div class="shell">
-        <header class="section-head section-head-row" data-reveal>
-            <div>
-                <span class="eyebrow">Pick up where you left off</span>
-                <h2>Recent projects</h2>
-            </div>
-            <a class="btn btn-ghost" href="library.php">View all</a>
-        </header>
-
-        <div class="grid grid-3">
-            <?php foreach ($recent as $project): ?>
-                <a class="project-card" href="project.php?id=<?= (int) $project['id'] ?>" data-reveal>
-                    <span class="status status-<?= e($project['status']) ?>"><?= e(ucfirst($project['status'])) ?></span>
-                    <h3><?= e($project['name']) ?></h3>
-                    <p class="muted"><?= e(site_type_label((string) $project['site_type'])) ?>
-                       &middot; v<?= (int) $project['current_version'] ?>
-                       &middot; <?= e(human_time((string) $project['updated_at'])) ?></p>
-                </a>
-            <?php endforeach; ?>
-        </div>
+  <section class="wrap features">
+    <h2>Everything a real website needs</h2>
+    <div class="feature-grid">
+      <div><span>📄</span><h3>Multiple pages</h3><p>Home, About, Menu, Contact… with shared header and footer.</p></div>
+      <div><span>📬</span><h3>Working forms</h3><p>Contact and booking forms land in your SiteForge inbox.</p></div>
+      <div><span>📱</span><h3>Looks great on phones</h3><p>Every section is responsive, and you can fine-tune each screen size.</p></div>
+      <div><span>🖼️</span><h3>Your own images</h3><p>Upload logos and photos and drop them anywhere.</p></div>
+      <div><span>🌍</span><h3>Any language</h3><p>Including Arabic and other right-to-left languages.</p></div>
+      <div><span>⬇️</span><h3>Yours to keep</h3><p>Download clean HTML files and host them anywhere.</p></div>
     </div>
-</section>
-<?php endif; ?>
+  </section>
 
-<section class="section">
-    <div class="shell">
-        <div class="cta-panel" data-reveal>
-            <div>
-                <h2>Ready to build something?</h2>
-                <p><?= e($engine['note']) ?></p>
-            </div>
-            <a class="btn btn-primary btn-lg" href="<?= $user ? 'create.php' : 'register.php' ?>">
-                <?= $user ? 'Create a site' : 'Get started free' ?>
-            </a>
-        </div>
-    </div>
-</section>
-
-<?php layout_footer(); ?>
+  <section class="wrap final-cta">
+    <h2>Your website is one sentence away.</h2>
+    <a class="btn btn-lg" href="<?= $start ?>">Create my website</a>
+  </section>
+</main>
+<?php foot();
