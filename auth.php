@@ -13,6 +13,9 @@ if (user()) {
 
 $mode = ($_POST['mode'] ?? $_GET['mode'] ?? '') === 'register' ? 'register' : 'login';
 $error = '';
+// The very first account becomes the admin; after that the admin decides whether sign-ups are open.
+$firstUser = !q('SELECT 1 FROM users LIMIT 1')->fetch();
+$closed = $mode === 'register' && !$firstUser && setting('signups') !== '1';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_csrf();
@@ -21,26 +24,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
 
     if ($mode === 'register') {
-        if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if ($closed) {
+            $error = 'New sign-ups are closed right now.';
+        } elseif ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Enter your name and a valid email.';
         } elseif (strlen($password) < 8) {
             $error = 'Use at least 8 characters for your password.';
         } elseif (q('SELECT 1 FROM users WHERE email = ?', [$email])->fetch()) {
             $error = 'That email already has an account. Log in instead.';
         } else {
-            q('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [mb_substr($name, 0, 80), $email, password_hash($password, PASSWORD_DEFAULT)]);
+            q('INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, ?)', [mb_substr($name, 0, 80), $email, password_hash($password, PASSWORD_DEFAULT), $firstUser ? 1 : 0]);
             session_regenerate_id(true);
             $_SESSION['uid'] = (int) db()->lastInsertId();
             redirect('dashboard.php');
         }
     } else {
-        $u = q('SELECT id, password FROM users WHERE email = ?', [$email])->fetch();
+        $u = q('SELECT id, password, suspended FROM users WHERE email = ?', [$email])->fetch();
         if ($u && password_verify($password, $u['password'])) {
-            session_regenerate_id(true);
-            $_SESSION['uid'] = (int) $u['id'];
-            redirect('dashboard.php');
+            if ($u['suspended']) {
+                $error = 'This account has been suspended. Contact the site owner if you think this is a mistake.';
+            } else {
+                session_regenerate_id(true);
+                $_SESSION['uid'] = (int) $u['id'];
+                redirect('dashboard.php');
+            }
+        } else {
+            $error = 'Wrong email or password.';
         }
-        $error = 'Wrong email or password.';
     }
 }
 
@@ -51,6 +61,7 @@ head($mode === 'register' ? 'Create your account' : 'Log in', 'page-auth');
     <h1><?= $mode === 'register' ? 'Create your free account' : 'Welcome back' ?></h1>
     <p class="muted"><?= $mode === 'register' ? 'Build your first website in a few minutes.' : 'Log in to keep building.' ?></p>
     <?php if ($error): ?><p class="alert"><?= e($error) ?></p><?php endif ?>
+    <?php if ($closed && !$error): ?><p class="alert">New sign-ups are closed right now. If you already have an account, <a href="auth.php">log in</a>.</p><?php endif ?>
     <input type="hidden" name="csrf" value="<?= e(csrf()) ?>">
     <input type="hidden" name="mode" value="<?= $mode ?>">
     <?php if ($mode === 'register'): ?>

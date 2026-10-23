@@ -29,6 +29,7 @@ The AI and the visual editor work on the same thing: pages of HTML plus one styl
 | `assets/blocks.js` | Sections, style presets and starter templates |
 | `api.php` | Save, upload, publish, download ZIP, AI chat |
 | `site.php` | Serves published sites at `site.php/<slug>/` and receives their forms |
+| `admin.php` | Admin area: overview, users, websites, settings |
 | `lib.php` | Settings, database, login and shared helpers |
 
 ## Run it locally
@@ -53,6 +54,15 @@ return ['anthropic_api_key' => 'sk-ant-…'];
 Optional settings in the same array: `'model'` (default `claude-opus-5-5`) and `'effort'` (`low`, `medium` or `high`; default `medium`).
 
 Without a key everything else works and the chat explains that the AI is off.
+
+## Admin
+
+The first account created on a fresh install is the admin (an **Admin** link appears in the top bar). Admins can make other users admins.
+
+- **Overview**: users, websites, AI requests and estimated AI cost, form messages, image storage, top AI users.
+- **Users**: search, make or remove admin, suspend (logs them out and takes their websites offline), restore, delete.
+- **Websites**: search, view any site (drafts too), publish or take offline, delete.
+- **Settings**: open or close sign-ups, pause the AI for everyone, and set how many AI requests each user gets per day (default 50; admins are unlimited).
 
 ## Put it online (cPanel)
 

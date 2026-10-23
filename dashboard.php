@@ -29,7 +29,7 @@ if (isset($_GET['inbox'])) {
 $sites = q('SELECT s.id, s.name, s.slug, s.published, s.updated_at, s.export IS NOT NULL AS built,
               (SELECT COUNT(*) FROM submissions WHERE site_id = s.id) AS inbox
             FROM sites s WHERE user_id = ? ORDER BY s.updated_at DESC', [$u['id']])->fetchAll();
-$ai = (bool) cfg('anthropic_api_key');
+$ai = ai_ready();
 
 head('My websites', 'page-dash');
 ?>
@@ -77,7 +77,7 @@ head('My websites', 'page-dash');
       <button type="button" data-mode="manual">🎨 Design it myself</button>
     </div>
     <section data-pane="ai">
-      <?php if (!$ai): ?><p class="alert">The AI assistant isn’t switched on for this SiteForge yet (it needs an API key in config.php). You can still design your site yourself.</p><?php endif ?>
+      <?php if (!$ai): ?><p class="alert">The AI assistant is off right now. You can still design your site yourself.</p><?php endif ?>
       <label>What should your website be?<textarea name="prompt" rows="5" placeholder="Describe it in your own words: what it’s for, what pages and sections you want, the style and colours you like…"></textarea></label>
       <div class="chips" id="examples">
         <button type="button">A website for my bakery with our menu, opening hours and a photo gallery. Warm and cosy.</button>

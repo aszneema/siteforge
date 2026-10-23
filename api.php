@@ -4,6 +4,7 @@ require __DIR__ . '/lib.php';
 use Anthropic\Beta\Messages\BetaRawContentBlockDeltaEvent;
 use Anthropic\Beta\Messages\BetaRawContentBlockStartEvent;
 use Anthropic\Beta\Messages\BetaRawMessageDeltaEvent;
+use Anthropic\Beta\Messages\BetaRawMessageStartEvent;
 use Anthropic\Beta\Messages\BetaTextDelta;
 use Anthropic\Core\Exceptions\AnthropicException;
 use Anthropic\Core\Exceptions\APIConnectionException;
@@ -61,9 +62,7 @@ switch ($action) {
 
     case 'delete':
         own_site($id);
-        foreach (q('SELECT file FROM assets WHERE site_id = ?', [$id])->fetchAll(PDO::FETCH_COLUMN) as $file) {
-            @unlink(__DIR__ . '/uploads/' . $file);
-        }
+        delete_site_files($id);
         q('DELETE FROM sites WHERE id = ?', [$id]);
         out(['ok' => true]);
 
@@ -148,6 +147,7 @@ function chat(array $site): never
     $images = array_slice((array) json_decode($_POST['images'] ?? '[]', true), 0, 6);
     $focus = json_decode($_POST['focus'] ?? '', true) ?: [];
 
+    $me = user();
     // A build can take minutes: release the session lock so autosave keeps working,
     // and stream events so neither the browser nor the host times out.
     session_write_close();
@@ -170,6 +170,19 @@ function chat(array $site): never
         $send(['t' => 'error', 'message' => "The AI assistant isn't switched on for this SiteForge yet. The site owner needs to add an Anthropic API key in config.php. You can still build everything by hand."]);
         exit;
     }
+    if (setting('ai_enabled') !== '1') {
+        $send(['t' => 'error', 'message' => 'The AI assistant has been paused by the admin. You can still build everything by hand.']);
+        exit;
+    }
+    $limit = (int) setting('ai_daily_limit');
+    if ($limit > 0 && !$me['is_admin']) {
+        $used = (int) q("SELECT COUNT(*) FROM messages m JOIN sites s ON s.id = m.site_id
+                         WHERE s.user_id = ? AND m.role = 'assistant' AND m.created_at >= date('now')", [$me['id']])->fetchColumn();
+        if ($used >= $limit) {
+            $send(['t' => 'error', 'message' => "You've reached today's limit of $limit AI requests. It resets at midnight (UTC); you can keep editing by hand meanwhile."]);
+            exit;
+        }
+    }
     if (!is_file(__DIR__ . '/vendor/autoload.php')) {
         $send(['t' => 'error', 'message' => 'The AI library is missing on the server. Run "composer install" in the SiteForge folder.']);
         exit;
@@ -184,6 +197,7 @@ function chat(array $site): never
 
     $text = '';
     $stop = null;
+    $tokensIn = $tokensOut = 0;
     try {
         require_once __DIR__ . '/vendor/autoload.php';
         $client = new Anthropic\Client(apiKey: cfg('anthropic_api_key'));
@@ -198,13 +212,17 @@ function chat(array $site): never
             betas: ['server-side-fallback-2026-07-01'],
         );
         foreach ($stream as $event) {
-            if ($event instanceof BetaRawContentBlockStartEvent && $event->contentBlock->type === 'thinking') {
+            if ($event instanceof BetaRawMessageStartEvent) {
+                $u = $event->message->usage;
+                $tokensIn = $u->inputTokens + ($u->cacheCreationInputTokens ?? 0) + ($u->cacheReadInputTokens ?? 0);
+            } elseif ($event instanceof BetaRawContentBlockStartEvent && $event->contentBlock->type === 'thinking') {
                 $send(['t' => 'status', 'text' => 'Planning your design…']);
             } elseif ($event instanceof BetaRawContentBlockDeltaEvent && $event->delta instanceof BetaTextDelta) {
                 $text .= $event->delta->text;
                 $send(['t' => 'delta', 'text' => $event->delta->text]);
             } elseif ($event instanceof BetaRawMessageDeltaEvent) {
                 $stop = $event->delta->stopReason ?? $stop;
+                $tokensOut = $event->usage->outputTokens;
             }
             if (connection_aborted()) {
                 exit;
@@ -239,7 +257,7 @@ function chat(array $site): never
     $send(['t' => 'status', 'text' => 'Checking the photos…']);
     $text = fix_photos($text);
     $reply = preg_match('~<reply>(.*?)</reply>~s', $text, $m) ? trim($m[1]) : (str_contains($text, '<page') ? 'Done!' : trim($text));
-    q('INSERT INTO messages (site_id, role, body) VALUES (?, ?, ?), (?, ?, ?)', [$id, 'user', $message, $id, 'assistant', $reply ?: 'Done!']);
+    q('INSERT INTO messages (site_id, role, body, tokens_in, tokens_out) VALUES (?, ?, ?, 0, 0), (?, ?, ?, ?, ?)', [$id, 'user', $message, $id, 'assistant', $reply ?: 'Done!', $tokensIn, $tokensOut]);
     $send(['t' => 'done', 'text' => $text, 'reply' => $reply]);
     exit;
 }

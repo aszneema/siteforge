@@ -543,9 +543,9 @@
 
     if (!SF.messages.length) bubble('assistant', SF.ai
       ? 'Hi! Tell me what website you want, or what to change, and I’ll build it right here. You can also click anything on the page and edit it yourself.'
-      : 'The AI assistant is not switched on for this SiteForge yet, but you can build everything by hand: drag sections from “Add”, click anything to edit it, and use “Theme” to restyle the whole site.');
+      : 'The AI assistant is off right now, but you can build everything by hand: drag sections from “Add”, click anything to edit it, and use “Theme” to restyle the whole site.');
     SF.messages.forEach((m) => bubble(m.role, m.body));
-    if (!SF.ai) { input.disabled = true; input.placeholder = 'AI is turned off. Add an API key in config.php.'; $('#chat-send').disabled = true; }
+    if (!SF.ai) { input.disabled = true; input.placeholder = 'The AI assistant is off right now.'; $('#chat-send').disabled = true; }
 
     renderPages();
     renderSuggestions();

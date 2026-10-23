@@ -11,7 +11,7 @@ $boot = [
     'csrf' => csrf(),
     'fonts' => array_keys(FONTS),
     'fontsUrl' => fonts_url(),
-    'ai' => (bool) cfg('anthropic_api_key'),
+    'ai' => ai_ready(),
     'liveUrl' => base() . '/site.php/' . $site['slug'] . '/',
 ];
 ?>

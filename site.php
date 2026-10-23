@@ -4,10 +4,12 @@ require __DIR__ . '/lib.php';
 // Serves published sites at site.php/<slug>/<page>.html and stores their form submissions.
 
 [$slug, $file] = array_pad(explode('/', trim($_SERVER['PATH_INFO'] ?? '', '/'), 2), 2, '');
-$site = $slug !== '' ? q('SELECT * FROM sites WHERE slug = ?', [$slug])->fetch() : null;
-$isOwner = $site && isset($_COOKIE['siteforge']) && (int) (user()['id'] ?? 0) === (int) $site['user_id'];
+// Sites of suspended accounts go offline; owners and admins can preview unpublished ones.
+$site = $slug !== '' ? q('SELECT s.* FROM sites s JOIN users u ON u.id = s.user_id WHERE s.slug = ? AND u.suspended = 0', [$slug])->fetch() : null;
+$viewer = $site && isset($_COOKIE['siteforge']) ? user() : null;
+$canPreview = $viewer && ($viewer['is_admin'] || (int) $viewer['id'] === (int) $site['user_id']);
 
-if (!$site || (!$site['published'] && !$isOwner)) {
+if (!$site || (!$site['published'] && !$canPreview)) {
     http_response_code(404);
     exit('<!doctype html><meta charset="utf-8"><title>Not found</title><p style="font:16px system-ui;padding:40px;text-align:center">This website doesn\'t exist or isn\'t published yet.</p>');
 }

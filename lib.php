@@ -55,6 +55,8 @@ function db(): PDO
             name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE COLLATE NOCASE,
             password TEXT NOT NULL,
+            is_admin INTEGER NOT NULL DEFAULT 0,
+            suspended INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS sites (
@@ -73,6 +75,8 @@ function db(): PDO
             site_id INTEGER NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
             role TEXT NOT NULL,
             body TEXT NOT NULL,
+            tokens_in INTEGER NOT NULL DEFAULT 0,   -- AI usage, on assistant messages
+            tokens_out INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS assets (
@@ -88,8 +92,48 @@ function db(): PDO
             data TEXT NOT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
         SQL);
+
+    // Databases made before the admin area existed get the new columns here.
+    $missing = fn (string $table, string $col) => !in_array($col, array_column($pdo->query("PRAGMA table_info($table)")->fetchAll(), 'name'), true);
+    if ($missing('users', 'is_admin')) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
+            ALTER TABLE users ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0;
+            UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users);');
+    }
+    if ($missing('messages', 'tokens_in')) {
+        $pdo->exec('ALTER TABLE messages ADD COLUMN tokens_in INTEGER NOT NULL DEFAULT 0;
+            ALTER TABLE messages ADD COLUMN tokens_out INTEGER NOT NULL DEFAULT 0;');
+    }
     return $pdo;
+}
+
+/** Admin-controlled settings, with their defaults. */
+const SETTINGS = ['signups' => '1', 'ai_enabled' => '1', 'ai_daily_limit' => '50'];
+
+function setting(string $key): string
+{
+    static $all = null;
+    $all ??= q('SELECT key, value FROM settings')->fetchAll(PDO::FETCH_KEY_PAIR) + SETTINGS;
+    return $all[$key];
+}
+
+/** True when the chat can run: a key is configured and the admin hasn't switched the AI off. */
+function ai_ready(): bool
+{
+    return cfg('anthropic_api_key') && setting('ai_enabled') === '1';
+}
+
+/** Delete a site's uploaded images from disk (the database rows go with the site). */
+function delete_site_files(int $siteId): void
+{
+    foreach (q('SELECT file FROM assets WHERE site_id = ?', [$siteId])->fetchAll(PDO::FETCH_COLUMN) as $file) {
+        @unlink(__DIR__ . '/uploads/' . $file);
+    }
 }
 
 function q(string $sql, array $args = []): PDOStatement
@@ -117,12 +161,20 @@ function user(): ?array
     if (empty($_SESSION['uid'])) {
         return null;
     }
-    return q('SELECT id, name, email FROM users WHERE id = ?', [$_SESSION['uid']])->fetch() ?: null;
+    // A suspended account is treated as logged out everywhere.
+    return q('SELECT id, name, email, is_admin FROM users WHERE id = ? AND suspended = 0', [$_SESSION['uid']])->fetch() ?: null;
 }
 
 function require_user(): array
 {
     return user() ?? redirect('auth.php');
+}
+
+function require_admin(): array
+{
+    $u = require_user();
+    $u['is_admin'] || fail(403, 'Only admins can open this page.');
+    return $u;
 }
 
 function csrf(): string
@@ -254,6 +306,7 @@ function head(string $title, string $bodyClass = ''): void
     <nav>
       <?php if ($u): ?>
         <a href="dashboard.php">My websites</a>
+        <?php if ($u['is_admin']): ?><a href="admin.php">Admin</a><?php endif ?>
         <span class="who"><?= e($u['name']) ?></span>
         <a href="auth.php?logout=<?= e(csrf()) ?>">Log out</a>
       <?php else: ?>
