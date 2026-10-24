@@ -267,11 +267,20 @@ function route_forms(string $html, string $action = ''): string
 function page_document(array $site, array $export, array $page, string $styleTag): string
 {
     $fonts = fonts_url($export['css'] ?? '');
+    $title = trim($page['title'] ?? '') ?: ($page['id'] === 'index' ? '' : $page['name'] . ' · ') . $site['name'];
+    $desc = trim($page['description'] ?? '');
+    // "Appear on scroll" effects: hide marked elements until they scroll into view (skipped for reduced motion).
+    $anim = str_contains($page['html'], 'sf-anim-');
     return "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
         . "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-        . '<title>' . e(($page['id'] === 'index' ? '' : $page['name'] . ' · ') . $site['name']) . "</title>\n"
+        . '<title>' . e($title) . "</title>\n"
+        . '<meta property="og:title" content="' . e($title) . "\">\n"
+        . ($desc ? '<meta name="description" content="' . e($desc) . "\">\n<meta property=\"og:description\" content=\"" . e($desc) . "\">\n" : '')
         . ($fonts ? "<link rel=\"stylesheet\" href=\"" . e($fonts) . "\">\n" : '')
-        . $styleTag . "\n</head>\n<body>\n" . $page['html'] . "\n</body>\n</html>\n";
+        . ($anim ? "<script>if('IntersectionObserver' in window&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('sf-js')</script>\n" : '')
+        . $styleTag . "\n</head>\n<body>\n" . $page['html']
+        . ($anim ? "\n<script>if(document.documentElement.classList.contains('sf-js')){var sfo=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('sf-in');sfo.unobserve(e.target)}})},{threshold:.12});document.querySelectorAll('[class*=\"sf-anim-\"]').forEach(function(el){sfo.observe(el)})}</script>" : '')
+        . "\n</body>\n</html>\n";
 }
 
 // --- App page shell ----------------------------------------------------------

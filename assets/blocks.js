@@ -312,13 +312,28 @@ img{max-width:100%;display:block}
 
   const sectionHtml = (key, c = {}) => (S[key].css ? `<style>${S[key].css}</style>` : '') + S[key].html(c);
 
+  // Sections show a live preview (filled in by the editor); basics show an icon.
   function blocks() {
-    const label = (icon, text) => `<div class="blk-ic">${icon}</div><div class="blk-tx">${text}</div>`;
     return [
-      ...Object.entries(S).map(([id, s]) => ({ id: 's-' + id, label: label(s.icon, s.label), category: 'Sections', content: sectionHtml(id) })),
-      ...BASICS.map(([id, text, icon, content]) => ({ id: 'b-' + id, label: label(icon, text), category: 'Basics', content, activate: id === 'image', select: true })),
+      ...Object.entries(S).map(([id, s]) => ({ id: 's-' + id, label: `<div class="blk-prev" data-sec="${id}"></div><div class="blk-tx">${s.icon} ${s.label}</div>`, category: 'Sections', content: sectionHtml(id), attributes: { class: 'blk-section', title: s.label } })),
+      ...BASICS.map(([id, text, icon, content]) => ({ id: 'b-' + id, label: `<div class="blk-ic">${icon}</div><div class="blk-tx">${text}</div>`, category: 'Basics', content, activate: id === 'image', select: true, attributes: { title: text } })),
     ];
   }
+
+  // Styles behind the Design panel's options, added to a site the first time they're used.
+  const EXTRA_CSS = {
+    btn: `.sf-btn-soft{background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary);border-color:transparent}
+.sf-btn-sm{padding:9px 16px;font-size:.9rem}
+.sf-btn-lg{padding:18px 34px;font-size:1.1rem}
+.sf-btn-block{display:flex;width:100%}`,
+    anim: `.sf-js .sf-anim-fade,.sf-js .sf-anim-up,.sf-js .sf-anim-zoom{opacity:0;transition:opacity .8s ease,transform .8s ease}
+.sf-js .sf-anim-up{transform:translateY(40px)}
+.sf-js .sf-anim-zoom{transform:scale(.92)}
+.sf-js .sf-in{opacity:1;transform:none}`,
+    hide: `@media (max-width:480px){.sf-hide-phone{display:none}}
+@media (min-width:481px) and (max-width:992px){.sf-hide-tablet{display:none}}
+@media (min-width:993px){.sf-hide-desktop{display:none}}`,
+  };
 
   // Starter templates: pages made of sections, with copy that fits the kind of site.
   const TEMPLATES = {
@@ -409,5 +424,5 @@ img{max-width:100%;display:block}
     return `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${fontsUrl}"><style>${rootCss(PRESETS[t.preset].vars)}${BASE_CSS}</style></head><body>${templatePages(t)[0].html || '<div style="height:100vh;display:grid;place-items:center;color:#94a3b8;font:600 40px sans-serif">Blank page</div>'}</body></html>`;
   }
 
-  window.SF_LIB = { PRESETS, BASE_CSS, TEMPLATES, rootCss, blocks, templatePages, templateDoc };
+  window.SF_LIB = { PRESETS, BASE_CSS, EXTRA_CSS, TEMPLATES, rootCss, blocks, sectionHtml, templatePages, templateDoc };
 })();

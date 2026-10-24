@@ -5,7 +5,7 @@
 Two ways to build, on the same page, at any time:
 
 - **AI builder**: describe the site in your own words (any language, photos and screenshots welcome). Claude builds the pages, then keeps editing them whenever you ask: "add a pricing section", "make it darker", "put my logo in the header". Every AI change has an Undo button.
-- **Visual editor**: start from a template and a style, drag in ready-made sections, click anything to edit it. Text, colours, fonts, spacing, borders, shadows, layout and effects for every element, a site-wide Theme panel, multiple pages, desktop/tablet/phone views.
+- **Visual editor**: start from a template and a style, drag in ready-made sections (searchable, with live previews in your site's colours), click anything to edit it. The **Design** tab shows plain-language controls that fit what you clicked: text, links (pages, sections, email, phone, WhatsApp), button looks, images, layout, backgrounds and photos, spacing, corners and shadows, appear-on-scroll effects and show/hide per screen size. An **Advanced** tab keeps every CSS option. Plus a site-wide Theme panel (including right-to-left), multiple pages with Google title and description, desktop/tablet/phone views, a 1-minute guided tour and a help panel.
 
 Then publish with one click (forms on the site land in your SiteForge inbox) or download the site as plain HTML files.
 
@@ -25,7 +25,8 @@ The AI and the visual editor work on the same thing: pages of HTML plus one styl
 | `index.php` | Landing page |
 | `auth.php` | Sign up, log in, log out |
 | `dashboard.php` | Your websites, the new-website dialog, form inboxes |
-| `editor.php` + `assets/editor.js` | The builder and the AI chat |
+| `editor.php` + `assets/editor.js` | The builder, the AI chat, pages, theme, tour and help |
+| `assets/design.js` | The Design tab: simple controls for the selected element |
 | `assets/blocks.js` | Sections, style presets and starter templates |
 | `api.php` | Save, upload, publish, download ZIP, AI chat |
 | `site.php` | Serves published sites at `site.php/<slug>/` and receives their forms |

@@ -43,6 +43,7 @@ $boot = [
       <button id="outline" title="Show element outlines"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3 3"/></svg></button>
       <button id="code" title="View the code"><svg viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg></button>
       <button id="preview" title="Preview"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button id="help" title="Help and tour"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17.5v.01"/></svg></button>
     </div>
     <span id="save-state" class="save-state">Loading…</span>
     <a id="view-live" class="btn btn-ghost btn-sm" href="<?= e($boot['liveUrl']) ?>">View site</a>
@@ -74,6 +75,7 @@ $boot = [
         </form>
       </section>
       <section data-panel="add" hidden>
+        <input id="block-search" class="block-search" type="search" placeholder="Search sections, e.g. pricing, gallery, contact" aria-label="Search sections">
         <p class="hint">Drag a section or element onto the page.</p>
         <div id="blocks"></div>
       </section>
@@ -107,16 +109,51 @@ $boot = [
     <div id="no-sel" class="no-sel">
       <div class="no-sel-icon">👆</div>
       <b>Click anything on the page to edit it</b>
-      <p>Double-click text to type. Drag an element to move it. Use the small toolbar to copy, move up or delete.</p>
+      <p>Double-click text to type. Drag an element to move it.</p>
+      <div class="quick-start">
+        <button data-go="add"><span>＋</span>Add a section</button>
+        <button data-go="theme"><span>🎨</span>Change colours &amp; fonts</button>
+        <button data-go="pages"><span>📄</span>Add or edit pages</button>
+        <button id="qs-tour"><span>🧭</span>Take the 1-minute tour</button>
+      </div>
     </div>
     <div id="sel-panel" hidden>
-      <div class="sel-head"><span class="muted small">Selected</span><b id="sel-name"></b></div>
-      <div class="sel-tabs"><button data-st="style" class="on">Style</button><button data-st="settings">Settings</button></div>
-      <div data-sp="style"><div id="styles"></div></div>
+      <div class="sel-head"><span id="sel-path" class="sel-path"></span><b id="sel-name"></b></div>
+      <div class="sel-tabs"><button data-st="design" class="on">Design</button><button data-st="style">Advanced</button><button data-st="settings">Settings</button></div>
+      <div data-sp="design"><div id="design"></div></div>
+      <div data-sp="style" hidden><p class="hint">Every CSS option, for fine control.</p><div id="styles"></div></div>
       <div data-sp="settings" hidden><p class="hint">Links, image text, form fields and more.</p><div id="traits"></div></div>
     </div>
   </aside>
 </div>
+<dialog id="page-dialog" class="modal modal-sm">
+  <form method="dialog" id="page-form">
+    <header class="modal-head"><h2>Page settings</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+    <label>Page name<input name="name" required maxlength="60"></label>
+    <p class="muted small" id="page-url"></p>
+    <h3>How it appears on Google</h3>
+    <label>Title<input name="title" maxlength="70" placeholder="Shown in the browser tab and in search results"></label>
+    <label>Description<textarea name="description" rows="3" maxlength="170" placeholder="One or two sentences about this page"></textarea></label>
+    <div class="seo-preview"><b id="seo-title"></b><span id="seo-url"></span><p id="seo-desc"></p></div>
+    <footer class="modal-foot"><button class="btn" value="save">Save</button></footer>
+  </form>
+</dialog>
+<dialog id="help-dialog" class="modal modal-sm">
+  <div class="help">
+    <header class="modal-head"><h2>Help</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+    <ul class="help-list">
+      <li><b>Edit anything:</b> click it on the page. Double-click text to type.</li>
+      <li><b>Change how it looks:</b> use the Design tab on the right. It only shows options that fit what you clicked.</li>
+      <li><b>Add content:</b> open Add and drag a section onto the page.</li>
+      <li><b>Restyle everything:</b> Theme changes colours, fonts and spacing for the whole site.</li>
+      <li><b>Phones and tablets:</b> switch screen size at the top. Changes made there only apply to that size.</li>
+      <li><b>Mistakes:</b> Undo fixes anything. Everything saves automatically.</li>
+    </ul>
+    <h3>Keyboard shortcuts</h3>
+    <dl class="keys"><dt>Ctrl/⌘ + Z</dt><dd>Undo</dd><dt>Ctrl/⌘ + Shift + Z</dt><dd>Redo</dd><dt>Ctrl/⌘ + C, V</dt><dd>Copy and paste the selected element</dd><dt>Delete</dt><dd>Remove the selected element</dd><dt>Esc</dt><dd>Exit preview</dd></dl>
+    <footer class="modal-foot"><button class="btn" id="help-tour">Take the tour</button></footer>
+  </div>
+</dialog>
 <div class="small-screen">The editor needs a bigger screen. Open SiteForge on a computer or tablet to edit your site.</div>
 
 <script>window.SF = <?= json_encode($boot, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
@@ -125,5 +162,6 @@ $boot = [
 <script src="https://unpkg.com/grapesjs-parser-postcss@1.0.3/dist/index.js"></script>
 <script src="assets/blocks.js"></script>
 <script src="assets/editor.js"></script>
+<script src="assets/design.js"></script>
 </body>
 </html>

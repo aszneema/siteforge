@@ -85,6 +85,8 @@
       pages: Pages.getAll().map((p) => ({
         id: p.getId(),
         name: p.getName() || p.getId(),
+        title: p.get('seoTitle') || '',
+        description: p.get('seoDesc') || '',
         html: editor.getHtml({ component: p.getMainComponent() }).replace(/^\s*<body[^>]*>|<\/body>\s*$/g, ''),
       })),
     };
@@ -99,6 +101,12 @@
       // Keep the site's own typography; only add the section helpers.
       editor.Css.addRules(L.BASE_CSS.split('\n').filter((l) => l.startsWith('.sf-') || l.startsWith('@media')).join('\n'));
     }
+  }
+
+  /** Add the styles behind a Design-panel option the first time a site uses it. */
+  const EXTRA_MARK = { btn: 'sf-btn-soft', anim: 'sf-anim-zoom', hide: 'sf-hide-phone' };
+  function ensureCss(key) {
+    if (!editor.Css.getAll().some((r) => r.selectorsToString().includes(EXTRA_MARK[key]))) editor.Css.addRules(L.EXTRA_CSS[key]);
   }
 
   function applyTemplate(key, presetKey) {
@@ -171,6 +179,7 @@
     document.body.classList.remove('previewing');
     editor.stopCommand('core:preview');
   };
+  editor.Keymaps.add('sf:exit-preview', 'esc', () => { if (document.body.classList.contains('previewing')) $('#exit-preview').click(); });
 
   $('#view-live').addEventListener('click', async (e) => {
     e.preventDefault();
@@ -207,6 +216,7 @@
     $$('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
     $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
     if (name === 'theme') renderTheme();
+    if (name === 'add') fillPreviews();
   }
   $$('[data-tab]').forEach((b) => b.addEventListener('click', () => openTab(b.dataset.tab)));
   $$('[data-go]').forEach((b) => b.addEventListener('click', () => openTab(b.dataset.go)));
@@ -218,7 +228,7 @@
     $('#pages').innerHTML = Pages.getAll().map((p) => `
       <div class="page-row${p === sel ? ' on' : ''}" data-page="${esc(p.getId())}">
         <button class="page-open"><b>${esc(p.getName() || p.getId())}</b><small>${esc(p.getId())}.html</small></button>
-        <button class="icon-btn" data-rename title="Rename">✎</button>
+        <button class="icon-btn" data-settings title="Page name and Google settings">⚙</button>
         ${p.getId() === 'index' ? '' : '<button class="icon-btn" data-remove title="Delete page">🗑</button>'}
       </div>`).join('');
     $('#page-label').textContent = (sel && (sel.getName() || sel.getId())) || '';
@@ -228,9 +238,8 @@
     const row = e.target.closest('[data-page]');
     if (!row) return;
     const page = Pages.get(row.dataset.page);
-    if (e.target.closest('[data-rename]')) {
-      const name = prompt('Page name', page.getName());
-      if (name) { page.setName(name.trim()); renderPages(); scheduleSave(); }
+    if (e.target.closest('[data-settings]')) {
+      openPageSettings(page);
     } else if (e.target.closest('[data-remove]')) {
       if (!confirm(`Delete the page "${page.getName()}"? You can undo this with the Undo button.`)) return;
       if (page === currentPage()) Pages.select('index');
@@ -261,6 +270,35 @@
   };
 
 
+  // Page name plus the title and description Google shows.
+  const pageForm = $('#page-form');
+  let editingPage = null;
+  const pageAddress = (p) => location.host + SF.liveUrl + (p.getId() === 'index' ? '' : p.getId() + '.html');
+  function seoPreview() {
+    const f = pageForm.elements;
+    $('#seo-title').textContent = f.title.value || (editingPage.getId() === 'index' ? SF.site.name : `${f.name.value} · ${SF.site.name}`);
+    $('#seo-url').textContent = pageAddress(editingPage);
+    $('#seo-desc').textContent = f.description.value || 'Add a description so people know what this page is about before they click.';
+  }
+  function openPageSettings(page) {
+    editingPage = page;
+    const f = pageForm.elements;
+    f.name.value = page.getName() || page.getId();
+    f.title.value = page.get('seoTitle') || '';
+    f.description.value = page.get('seoDesc') || '';
+    $('#page-url').textContent = 'Address: ' + pageAddress(page);
+    seoPreview();
+    $('#page-dialog').showModal();
+  }
+  pageForm.addEventListener('input', seoPreview);
+  pageForm.addEventListener('submit', () => {
+    const f = pageForm.elements;
+    editingPage.setName(f.name.value.trim() || editingPage.getName());
+    editingPage.set({ seoTitle: f.title.value.trim(), seoDesc: f.description.value.trim() });
+    renderPages();
+    scheduleSave();
+  });
+
   // --- Theme ------------------------------------------------------------------
 
   const THEME = [
@@ -288,7 +326,10 @@
     const v = themeVars();
     const has = Object.keys(v).some((k) => k.startsWith('--'));
     const firstFont = (val) => ((val || '').match(/['"]?([^'",]+)/) || [])[1]?.trim();
+    const rtl = editor.Css.getRule('body')?.getStyle().direction === 'rtl';
     $('#theme').innerHTML = `
+      <h4>Text direction</h4>
+      <div class="seg seg-wide"><button data-dir="ltr" class="${rtl ? '' : 'on'}">Left to right</button><button data-dir="rtl" class="${rtl ? 'on' : ''}">Right to left (عربي)</button></div>
       <h4>One-click styles</h4>
       <div class="presets">${Object.entries(L.PRESETS).map(([k, p]) => `
         <button data-preset="${k}" title="${p.label}">
@@ -315,6 +356,13 @@
     setVars({ [el.dataset.var]: value });
   });
   $('#theme').addEventListener('click', (e) => {
+    const d = e.target.closest('[data-dir]');
+    if (d) {
+      editor.Css.setRule('body', { ...(editor.Css.getRule('body')?.getStyle() || {}), direction: d.dataset.dir });
+      scheduleSave();
+      renderTheme();
+      return;
+    }
     const b = e.target.closest('[data-preset]');
     if (!b) return;
     setVars(L.PRESETS[b.dataset.preset].vars);
@@ -325,7 +373,8 @@
   // --- Selection panel --------------------------------------------------------
 
   const NAMES = { h1: 'Heading', h2: 'Heading', h3: 'Heading', h4: 'Heading', p: 'Paragraph', a: 'Link', img: 'Image', section: 'Section', header: 'Header', footer: 'Footer', nav: 'Menu', button: 'Button', form: 'Form', input: 'Input field', textarea: 'Text box', ul: 'List', li: 'List item', article: 'Card' };
-  const friendlyName = (c) => (c.getClasses().includes('sf-btn') ? 'Button' : NAMES[c.get('tagName')] || c.getName());
+  const CLASS_NAMES = { 'sf-btn': 'Button', 'sf-container': 'Content area', 'sf-card': 'Card', 'sf-grid': 'Grid', 'sf-split': 'Two columns', 'sf-actions': 'Buttons row', 'sf-head': 'Section title', 'sf-form': 'Form' };
+  const friendlyName = (c) => CLASS_NAMES[c.getClasses().find((x) => CLASS_NAMES[x])] || NAMES[c.get('tagName')] || (c.get('tagName') === 'div' ? 'Box' : c.getName());
 
   function updateSelection() {
     const c = editor.getSelected();
@@ -530,6 +579,87 @@
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#chat-form').requestSubmit(); }
   });
 
+  // --- Add panel: search and live previews ------------------------------------
+
+  // Each section preview is the real section, drawn small with this site's colours and fonts.
+  let previewKey = '';
+  function fillPreviews() {
+    const vars = themeVars();
+    const key = JSON.stringify(vars);
+    if (key !== previewKey) $$('#blocks .blk-prev').forEach((el) => { el.classList.remove('ready'); el.textContent = ''; });
+    previewKey = key;
+    const head = `<meta charset="utf-8"><link rel="stylesheet" href="${SF.fontsUrl}"><style>${L.rootCss(Object.keys(vars).length ? vars : L.PRESETS.modern.vars)}${L.BASE_CSS}body{overflow:hidden}</style>`;
+    $$('#blocks .blk-prev[data-sec]:not(.ready)').forEach((el) => {
+      el.classList.add('ready');
+      const f = document.createElement('iframe');
+      f.tabIndex = -1;
+      f.setAttribute('aria-hidden', 'true');
+      f.srcdoc = `<!doctype html><html><head>${head}</head><body>${L.sectionHtml(el.dataset.sec).replace(/w=(\d+)&h=(\d+)/g, (m, w, h) => `w=${Math.round(w / 3)}&h=${Math.round(h / 3)}`)}</body></html>`;
+      el.append(f);
+      f.style.transform = `scale(${el.clientWidth / 1200})`;
+    });
+  }
+
+  $('#block-search').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    const bm = editor.Blocks;
+    bm.render(q ? bm.getAll().filter((b) => `${b.get('attributes')?.title} ${b.get('category')}`.toLowerCase().includes(q)) : undefined);
+    previewKey = '';
+    fillPreviews();
+  });
+
+  // --- Help and the guided tour -------------------------------------------------
+
+  $$('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
+  $('#help').onclick = () => $('#help-dialog').showModal();
+  $('#help-tour').onclick = () => { $('#help-dialog').close(); startTour(); };
+  $('#qs-tour').onclick = () => startTour();
+
+  const TOUR = [
+    ['.ed-canvas', 'This is your page', 'Click anything to select it, then change it in the panel on the right. Double-click any text to type.'],
+    ['[data-tab="add"]', 'Add sections', 'Open Add and drag ready-made sections, like a gallery, prices or a contact form, onto your page.'],
+    ['.ed-right', 'Design panel', 'Colours, sizes, spacing, links and effects for whatever you selected. It only shows options that fit.'],
+    ['[data-tab="theme"]', 'Theme', 'Change the colours and fonts of the whole site at once, or pick a one-click style.'],
+    ['[data-tab="chat"]', 'AI helper', 'Describe a change in your own words and the AI does it for you.'],
+    ['.ed-group[aria-label="Screen size"]', 'Phones and tablets', 'See how your site looks on other screens and adjust it just for them.'],
+    ['#publish', 'Go live', 'Everything saves automatically. When you’re happy, publish your site with one click.'],
+  ].filter((s) => SF.ai || s[0] !== '[data-tab="chat"]');
+
+  let tourStep = 0;
+  addEventListener('resize', () => { if ($('.tour')) startTour(tourStep); });
+  function startTour(step = 0) {
+    tourStep = step;
+    $('.tour')?.remove();
+    if (step >= TOUR.length) {
+      try { localStorage.setItem('sf-tour-done', '1'); } catch { /* private mode: the tour just shows again next time */ }
+      return;
+    }
+    const [sel, title, text] = TOUR[step];
+    const r = $(sel).getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'tour';
+    el.innerHTML = `<div class="tour-hole" style="left:${r.left - 6}px;top:${r.top - 6}px;width:${r.width + 12}px;height:${r.height + 12}px"></div>
+      <div class="tour-card" role="dialog" aria-label="${esc(title)}"><small>${step + 1} of ${TOUR.length}</small><b>${esc(title)}</b><p>${esc(text)}</p>
+      <div class="tour-btns"><button class="btn btn-ghost btn-sm" data-t="skip">Skip tour</button><button class="btn btn-sm" data-t="next">${step === TOUR.length - 1 ? 'Done' : 'Next'}</button></div></div>`;
+    document.body.append(el);
+    const card = $('.tour-card', el);
+    // Top-bar targets get the card underneath; everything else gets it alongside.
+    let x = r.right + 16;
+    let y = Math.max(16, r.top);
+    if (r.top < 60) { x = r.left + r.width / 2 - 150; y = r.bottom + 16; } else if (x + 300 > innerWidth - 16) x = r.left - 316;
+    x = Math.min(Math.max(16, x), innerWidth - 316);
+    card.style.left = x + 'px';
+    card.style.top = Math.min(y, innerHeight - card.offsetHeight - 16) + 'px';
+    el.addEventListener('click', (e) => {
+      if (e.target.dataset.t === 'next') startTour(step + 1);
+      if (e.target.dataset.t === 'skip') startTour(TOUR.length);
+    });
+    $('[data-t="next"]', el).focus();
+  }
+
+  // Shared with design.js
+  window.SFE = { esc, ensureCss, friendlyName, fontValue, toHex };
+
   // --- Start ------------------------------------------------------------------
 
   editor.on('load', () => {
@@ -561,6 +691,10 @@
     if (first && SF.ai) {
       sessionStorage.removeItem('sf-prompt-' + SF.site.id);
       send(first);
+    } else {
+      let seen = false;
+      try { seen = !!localStorage.getItem('sf-tour-done'); } catch { /* no storage: show the tour */ }
+      if (!seen) setTimeout(() => startTour(), 700);
     }
   });
 })();
